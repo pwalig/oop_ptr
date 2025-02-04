@@ -108,7 +108,7 @@ with `#define`s you can include / exclude methods, operators and constructors fr
 # Documentation
 
 > [!WARNING]  
-> Documentation not complite
+> Documentation not complete
 
 ``` c++
 template<
