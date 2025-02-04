@@ -91,7 +91,7 @@ int main() {
 
     poob->b = 1;
     poob2->b = 2;
-    assert(poob->b != boop2->b);
+    assert(poob->b != boop2->b); // boop and boop2 are independent - point to different objects
 
     // no need to delete as both boop and boop2 will automatically dealocate managed resources when exiting scope
 }
@@ -142,3 +142,8 @@ template<
 With new [reflection system for C++ 26](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2996r0.html) there should be a way to do all this without the need to define special functions in class definitions. I have plans for reimplementing oop_ptr using new reflection system as a separate smart pointer (`oop_ptr26`). Existing implementation will remain to be used in projects that don't want to switch to version 26 of C++.
 
 Look into [issues](https://github.com/pwalig/oop_ptr/issues) to see all planned features.
+
+# Adoption
+
+Here is a list of projects that utilize `oop_ptr`:
+* [pwalig/mesh-compiler](https://github.com/pwalig/mesh-compiler)
