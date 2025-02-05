@@ -100,6 +100,10 @@ int main(void) {
 }
 ```
 
+# Usage
+
+`oop_ptr` is a header only, single include utility. Just copy [this file](https://github.com/pwalig/oop_ptr/blob/main/oop_ptr.hpp) to your project's include directory.
+
 # Features
 
 ## 1. Made to be consistent with smart pointers form C++ standard library:
@@ -108,8 +112,6 @@ with methods like `release()` and `get()` and overloaded `->` and `*` operators
 ## 2. Customizable:
 with `#define`s you can include / exclude methods, operators and constructors from `oop_ptr` definition
 
-## 3. Simple and understandable:
-easy to analyze source code
 
 # Documentation
 
@@ -166,6 +168,8 @@ In following definitions replace `b` with name of the base class and `c` with na
 | `OOP_PTR_OBJECT_COPY_OPERATOR` | `operator=(const T& obj)` | no |
 | `OOP_PTR_PTR_COPY_OPERATOR` | `operator=(const T* ptr)` | no |
 | `OOP_PTR_PTR_MOVE_OPERATOR` | `operator=(T* ptr)` | no |
+
+If you wish to customize `oop_ptr` it is encouraged that you put your `#define`s or remove existing ones directly in `oop_ptr.hpp` file.
 
 > [!WARNING]  
 > Do not define both: `OOP_PTR_PTR_COPY_OPERATOR` and `OOP_PTR_PTR_MOVE_OPERATOR` at once.  
