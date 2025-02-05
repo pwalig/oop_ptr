@@ -1,6 +1,6 @@
 # oop_ptr
 
-smart pointer for managing objects that utilize object oriented programming paradigm of C++
+smart pointer for managing objects that belong to inheritance hierarchies
 
 # Problem
 
@@ -24,7 +24,7 @@ class ChildClass : public BaseClass {
     }
 }
 
-int main() {
+int main(void) {
     ChildClass c;
     BaseClass b = c; // c object will get trimmed to b object
     b.foo(); // "base" will be printed
@@ -33,6 +33,8 @@ int main() {
     ChildClass* cptr = new ChildClass();
     BaseClass* bptr = cptr;
     bptr->foo(); // "child" will be printed
+
+    return 0;
 }
 ```
 
@@ -43,16 +45,16 @@ std::vector<BaseClass*> bcv;
 bcv.push_back(new ChildClass());
 
 bcv2 = bcv; // now both bcv[0] and bcv2[0] point to the same object
-// potential double free can happen if you are not carefull
+// potential double free and other abnormalities can happen if you are not carefull
 ```
 
-Now try putting a vector like that as a member in a class that you wish to be __Copy Assignable__ or __Copy Constructable__. You will not only need to define a destructuor (to free dynamically allocated data), but also Copy Assignment constructor and operator.
+Now try putting a vector like that as a member in a class that you wish to be *Copy Assignable* or *Copy Constructable*. You will not only need to define a *destructuor* (to free dynamically allocated data), but also *Copy Assignment* *constructor* and *operator*.
 
 # Solution
 
 Here comes `oop_ptr`.
 
-With `oop_ptr` you can treat all objects as trivially constuctable, copiable and destructable despite them being dynamically alocated with `new` keyword.
+`oop_ptr` makes all objects easily constuctable, copiable and destructable.
 
 Only caveat is, that you will need to define a special function in every non-abstract object in your inheritance hierarchy. Luckily `oop_ptr.hpp` contains macros to speed up the process.
 
@@ -82,7 +84,7 @@ class ChildClass : public BaseClass {
 oop_ptr_define(BaseClass, BaseClass)
 oop_ptr_define(BaseClass, ChildClass)
 
-int main() {
+int main(void) {
     oop_ptr<BaseClass> boop = oop_ptr<BaseClass>(new ChildClass()); // boop will take ownership over newly allocated ChildClass instance
     boop->foo(); // "child" will be printed
 
@@ -94,6 +96,7 @@ int main() {
     assert(poob->b != boop2->b); // boop and boop2 are independent - point to different objects
 
     // no need to delete as both boop and boop2 will automatically dealocate managed resources when exiting scope
+    return 0;
 }
 ```
 
@@ -107,9 +110,6 @@ with `#define`s you can include / exclude methods, operators and constructors fr
 
 # Documentation
 
-> [!WARNING]  
-> Documentation not complete
-
 ``` c++
 template<
     typename T
@@ -120,7 +120,10 @@ template<
 
 * `oop_ptr()` - initializes managed object pointer to `nullptr`
 * `oop_ptr(T* ptr)` - takes ownership over object pointed by `ptr`
+* `oop_ptr(const T* ptr)` - copies object pointed by `ptr` into newly allocated memory, disabled by default, define `OOP_PTR_PTR_COPY_CONSTRUCTOR` to enable
 * `oop_ptr(const T& obj)` - copies `obj` into newly allocated memory
+* `oop_ptr(const oop_ptr<T>& other)` - copy constructor
+* `oop_ptr(oop_ptr<T>&& other)` - move constructor
 
 ## Operators
 
@@ -128,6 +131,9 @@ template<
 * `operator= (oop_ptr<T>&& other)` - move assignment operator
 * `operator bool` - checks if there is an associated managed object
 * `operator*`, `operator->` - dereferences pointer to the managed object
+* `operator=(const T& obj)` - destroyes currently managed object (if any) and creates a copy of supplied object, disabled by default, to enable define `OOP_PTR_OBJECT_COPY_OPERATOR`
+* `operator=(const T& obj)` - destroyes currently managed object (if any) and creates a copy of object pointed by `ptr`, disabled by default, to enable define `OOP_PTR_PTR_COPY_OPERATOR`
+* `operator=(T* ptr)` - destroyes currently managed object (if any) and takes ownership over object pointed by `ptr`, disabled by default, to enable define `OOP_PTR_PTR_MOVE_OPERATOR`
 
 ## Methods
 
@@ -136,6 +142,47 @@ template<
 * `gettable<U>()` - checks if managed object is an instance of `U` (with `dynamic_cast`)
 * `release<U>()` - returns a pointer to the managed object, dynamic_casted to `U` and releases the ownership
 * `get<U>()` - returns a pointer to the managed object, dynamic_casted to `U`, without releasing the ownership
+
+## Macros
+
+In following definitions replace `b` with name of the base class and `c` with name of the child class.
+
+* `oop_ptr_base_declare(b);` - meant to be put in base class declaration (for pure virtual method type: `oop_ptr_base_declare(b) = 0;`)
+* `oop_ptr_child_declare(b);` - meant to be put in child class declaration
+* `oop_ptr_define(b, c)` - creates method definition (for definition of base class use `oop_ptr_define(b, b)`)
+* `oop_ptr_template_base_define(b)` - meant to be put in base class declaration if the base class is a template
+* `oop_ptr_template_child_define(b, c)` - meant to be put in child class declaration if the base class is a template
+
+## Customization with `#define`s
+
+| define name | created method | defined by default |
+| --- | --- | --- |
+| `OOP_PTR_PTR_MOVE_CONSTRUCTOR` | `oop_ptr(T* ptr)` | yes |
+| `OOP_PTR_OBJECT_COPY_CONSTRUCTOR` | `oop_ptr(const T& obj)` | yes |
+| `OOP_PTR_PTR_COPY_CONSTRUCTOR` | `oop_ptr(const T* ptr)` | no |
+| `OOP_PTR_OBJECT_COPY_OPERATOR` | `operator=(const T& obj)` | no |
+| `OOP_PTR_PTR_COPY_OPERATOR` | `operator=(const T* ptr)` | no |
+| `OOP_PTR_PTR_MOVE_OPERATOR` | `operator=(T* ptr)` | no |
+
+> [!WARNING]  
+> Do not define both: `OOP_PTR_PTR_COPY_OPERATOR` and `OOP_PTR_PTR_MOVE_OPERATOR` at once.
+> Do not define both: `OOP_PTR_PTR_COPY_CONSTRUCTOR` and `OOP_PTR_PTR_MOVE_CONSTRUCTOR` at once.
+
+It is also possible to change name of the method generated by macros with `oop_ptr_get_copy` `#define`.
+
+``` c++
+#define oop_ptr_get_copy awesomeNamedMethod
+```
+
+By default (if `oop_ptr_get_copy` is not defined) macros will generate method named: `get_copy_ptr`
+
+---
+
+> When in doubt look at the source code (it's not complicated).
+
+# Disclamers
+
+Although `oop_ptr` was created to enabe storing objects that inherit from some base class in a C++ containers or as class members, this is not a particularly cache friendly approach, since `oop_ptr` still stores a pointer, that can point anywhere, potentially creating a *cache miss*. Because of this issue i plan to create a seperate utility that would store object directly (without any extra indirection), as a separete project. I will provide a link when it's ready.
 
 # Future
 
