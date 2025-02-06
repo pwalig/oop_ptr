@@ -4,7 +4,7 @@ smart pointer for managing objects that belong to inheritance hierarchies
 
 # Problem
 
-Whenever you wish to utilize oriented programming paradigm of C++ you are sometimes forced to use pointers:
+Whenever you wish to utilize object oriented programming paradigm of C++ you are sometimes forced to use pointers:
 
 ``` c++
 class BaseClass {
@@ -60,6 +60,7 @@ Only caveat is, that you will need to define a special function in every non-abs
 
 ``` c++
 #include <oop_ptr.hpp>
+#include <cassert>
 
 class BaseClass {
     public:
